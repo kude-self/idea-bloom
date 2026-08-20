@@ -1,0 +1,39 @@
+name: Test IdeaBloom
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Verify required files and UI anchors
+        run: |
+          test -f index.html
+          grep -q 'IdeaBloom' index.html
+          grep -q 'id="go"' index.html
+          grep -q 'id="next"' index.html
+          grep -q 'id="make"' index.html
+          grep -q 'id="copy"' index.html
+          grep -q 'viewport' index.html
+      - name: Check inline JavaScript syntax
+        run: |
+          python - <<'PY'
+          import re, pathlib
+          html = pathlib.Path('index.html').read_text(encoding='utf-8')
+          scripts = re.findall(r'<script>(.*?)</script>', html, flags=re.S|re.I)
+          assert scripts, 'No inline JavaScript found'
+          pathlib.Path('/tmp/app.js').write_text('\n'.join(scripts), encoding='utf-8')
+          PY
+          node --check /tmp/app.js
+      - name: Check mobile layout markers
+        run: |
+          grep -q '@media(max-width:600px)' index.html
+          grep -q 'font-size:16px' index.html
