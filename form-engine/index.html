@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>想法成形所｜成形引擎 1.0</title>
+<style>
+:root{
+  --bg:#f7f8f6;--paper:#ffffff;--ink:#3f4642;--muted:#7c8580;--line:#e3e7e4;
+  --sage:#9fb7aa;--sage-soft:#e4eee8;--blue:#b8ccd8;--blue-soft:#eaf1f5;
+  --lav:#c8c0da;--lav-soft:#f0ecf6;--peach:#e8c2aa;--peach-soft:#f7e9df;
+  --rose:#cda9aa;--rose-soft:#f4e6e7;--shadow:0 14px 36px rgba(62,73,67,.08)
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{
+  margin:0;color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+  background:
+    radial-gradient(circle at 8% 9%,rgba(232,194,170,.28),transparent 23%),
+    radial-gradient(circle at 92% 14%,rgba(184,204,216,.30),transparent 25%),
+    radial-gradient(circle at 12% 86%,rgba(159,183,170,.28),transparent 24%),
+    radial-gradient(circle at 88% 80%,rgba(200,192,218,.24),transparent 25%),
+    linear-gradient(180deg,#fafaf8 0%,#f5f7f5 100%);
+  min-height:100vh
+}
+button,input,textarea{font:inherit}
+button{touch-action:manipulation}
+.app{max-width:820px;margin:auto;padding:18px 14px 72px}
+.hero{text-align:center;padding:24px 8px 12px}
+.brand{font-size:12px;letter-spacing:.18em;font-weight:800;color:#84938b}
+.hero h1{font-size:32px;line-height:1.3;margin:9px 0 8px}
+.hero p{margin:0 auto;max-width:620px;color:var(--muted);font-size:14px;line-height:1.8}
+.hero-note{
+  margin:18px auto 0;max-width:610px;padding:15px 18px;border-radius:18px;
+  background:rgba(255,255,255,.76);border:1px solid rgba(255,255,255,.92);
+  box-shadow:var(--shadow);font-size:14px;line-height:1.75
+}
+.engine{
+  display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin:18px 0 8px
+}
+.engine span{
+  text-align:center;padding:8px 4px;border-radius:999px;background:rgba(255,255,255,.76);
+  border:1px solid var(--line);font-size:11px;color:#748078
+}
+.progress-head{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--muted);margin:14px 2px 7px}
+.track{height:8px;background:#e8ece9;border-radius:999px;overflow:hidden}
+.fill{height:100%;width:0;background:linear-gradient(90deg,var(--sage),var(--blue),var(--lav));transition:.25s}
+.card{
+  background:rgba(255,255,255,.95);border:1px solid var(--line);border-radius:26px;
+  padding:22px;margin-top:14px;box-shadow:var(--shadow)
+}
+.step{display:none}.step.active{display:block}
+.eyebrow{font-size:11px;letter-spacing:.14em;font-weight:800;color:#81958a;margin-bottom:6px}
+h2{font-size:23px;margin:0 0 8px}
+.desc{font-size:14px;line-height:1.75;color:var(--muted);margin:0 0 16px}
+.tip{background:var(--blue-soft);border-radius:15px;padding:13px 15px;font-size:13px;line-height:1.7;color:#657681;margin-bottom:15px}
+label{display:block;font-size:13px;font-weight:760;margin:15px 0 7px}
+input,textarea{
+  width:100%;border:1.5px solid #dde4df;background:#fcfdfc;color:var(--ink);
+  border-radius:15px;padding:13px 14px;outline:none;font-size:16px
+}
+textarea{min-height:98px;resize:vertical;line-height:1.65}
+input:focus,textarea:focus{border-color:var(--sage);box-shadow:0 0 0 3px rgba(159,183,170,.14)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.chip{
+  border:1px solid var(--line);background:#fff;color:#68736d;border-radius:999px;
+  padding:9px 12px;font-size:13px;cursor:pointer;min-height:40px
+}
+.chip.active{background:var(--sage-soft);border-color:#c4d7cb;color:#52665b;font-weight:760}
+.choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.choice{
+  border:1px solid var(--line);background:#fff;border-radius:17px;padding:14px;text-align:left;cursor:pointer;
+  min-height:86px
+}
+.choice b{display:block;font-size:14px;margin-bottom:5px}
+.choice small{display:block;font-size:12px;line-height:1.55;color:var(--muted)}
+.choice.active{background:var(--lav-soft);border-color:#d7cfe7}
+.actions{
+  position:sticky;bottom:8px;display:flex;justify-content:space-between;gap:10px;
+  margin-top:18px;padding:9px;border-radius:18px;background:rgba(247,248,246,.92);
+  backdrop-filter:blur(12px);z-index:20
+}
+.btn{border:0;border-radius:15px;padding:12px 18px;font-weight:760;cursor:pointer;min-height:48px}
+.btn.primary{background:#748e80;color:#fff}
+.btn.ghost{background:#edf1ee;color:#68716d}
+.btn.full{width:100%;margin-top:10px}
+.section-title{font-size:15px;font-weight:800;margin:20px 0 8px}
+.result-box{border:1px solid var(--line);border-radius:17px;padding:14px;background:#fafbfa}
+.result-box + .result-box{margin-top:10px}
+.result-box b{display:block;font-size:12px;color:#718078;margin-bottom:6px}
+.result-box p{margin:0;font-size:13px;line-height:1.7;white-space:pre-wrap}
+.prompt{
+  margin-top:12px;background:#303735;color:#f6f3ef;border-radius:17px;padding:16px;
+  white-space:pre-wrap;font:12.5px/1.82 ui-monospace,SFMono-Regular,Menlo,monospace;
+  max-height:480px;overflow:auto
+}
+.next-choices{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:12px}
+.next-card{border:1px solid var(--line);background:#fff;border-radius:16px;padding:13px;text-align:center;font-size:13px;font-weight:740}
+.footer{text-align:center;color:#949c97;font-size:11px;line-height:1.8;margin-top:24px}
+.toast{
+  position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(15px);
+  background:#3f4742;color:#fff;border-radius:999px;padding:11px 16px;font-size:13px;
+  opacity:0;pointer-events:none;transition:.2s;z-index:99
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:640px){
+  .app{padding:14px 11px 60px}.hero{padding-top:18px}.hero h1{font-size:28px}
+  .engine{grid-template-columns:repeat(3,1fr)}.card{padding:18px;border-radius:22px}
+  .choice-grid{grid-template-columns:1fr}.next-choices{grid-template-columns:1fr}
+  .actions{padding:8px}.btn{flex:1;padding:12px 10px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="hero">
+  <div class="brand">✦ 想法成形所 · FORM ENGINE 1.0 ✦</div>
+  <h1>把一個想法，真正帶到可以開始做</h1>
+  <p>你不用先把所有細節想完。你只要說清楚你知道的部分，剩下的交給成形引擎幫你補齊、取捨、整理。</p>
+  <div class="hero-note">成形引擎：<b>聽懂 → 補齊 → 取捨 → 成形 → 驗收 → 延續</b></div>
+</header>
+
+<div class="engine"><span>聽懂</span><span>補齊</span><span>取捨</span><span>成形</span><span>驗收</span><span>延續</span></div>
+<div class="progress-head"><span id="stepTitle">想法</span><span id="stepCount">1 / 7</span></div>
+<div class="track"><div class="fill" id="fill"></div></div>
+
+<div class="card">
+<section class="step active" data-step="0">
+  <div class="eyebrow">STEP 1 · 先讓我聽懂</div>
+  <h2>你想做什麼？</h2>
+  <p class="desc">不用寫得很完整。像平常跟人說話一樣就好。</p>
+  <label>我想做一個…</label>
+  <textarea id="idea" placeholder="例如：我想做一個每天可以安排生活、勾選日常、留下一句話的小系統"></textarea>
+  <label>它比較接近</label>
+  <div class="chips" id="typeChips">
+    <button type="button" class="chip" data-value="生活工具">生活工具</button>
+    <button type="button" class="chip" data-value="品牌工具">品牌工具</button>
+    <button type="button" class="chip" data-value="內容工具">內容工具</button>
+    <button type="button" class="chip" data-value="客戶／旅人管理">客戶／旅人管理</button>
+    <button type="button" class="chip" data-value="課程／學員管理">課程／學員管理</button>
+    <button type="button" class="chip" data-value="預約系統">預約系統</button>
+    <button type="button" class="chip" data-value="其他">其他</button>
+  </div>
+</section>
+
+<section class="step" data-step="1">
+  <div class="eyebrow">STEP 2 · 鎖定第一版</div>
+  <h2>最想先解決哪件事？</h2>
+  <p class="desc">這一步不是限制你的想法，而是讓第一版真的做得完、用得起來。</p>
+  <label>最重要的問題</label>
+  <textarea id="problem" placeholder="例如：我不想每天重新想今天要做什麼，也不喜歡有壓力的習慣打卡 App"></textarea>
+  <label>做完後，我最希望得到</label>
+  <textarea id="result" placeholder="例如：打開手機就能自然進入我喜歡的生活節奏"></textarea>
+</section>
+
+<section class="step" data-step="2">
+  <div class="eyebrow">STEP 3 · 使用情境</div>
+  <h2>誰會用？什麼時候用？</h2>
+  <label>主要使用者</label>
+  <input id="user" placeholder="例如：我自己／我的旅人／我的學員">
+  <label>最常在哪些情況打開</label>
+  <textarea id="context" placeholder="例如：早上起床、工作中、晚上睡前，主要用手機"></textarea>
+  <div class="tip">如果你不知道，也可以留白。最後的 AI 指令會要求 AI 依情境合理判斷，不把所有問題再丟回來問你。</div>
+</section>
+
+<section class="step" data-step="3">
+  <div class="eyebrow">STEP 4 · 讓 AI 幫你多想一步</div>
+  <h2>你希望 AI 幫你補到什麼程度？</h2>
+  <div class="choice-grid" id="assistChoices">
+    <button type="button" class="choice" data-value="保守補齊"><b>保守補齊</b><small>只補第一版一定需要的東西，不主動加太多。</small></button>
+    <button type="button" class="choice" data-value="完整規劃"><b>完整規劃</b><small>主動補使用情境、資料欄位、功能、頁面、狀態與操作流程。</small></button>
+    <button type="button" class="choice" data-value="深度產品企劃"><b>深度產品企劃</b><small>除了第一版，還幫你分辨哪些值得之後再做，但不擅自塞進第一版。</small></button>
+    <button type="button" class="choice" data-value="交給AI判斷"><b>交給 AI 判斷</b><small>依你前面的描述，讓 AI 自己決定該補到什麼程度。</small></button>
+  </div>
+</section>
+
+<section class="step" data-step="4">
+  <div class="eyebrow">STEP 5 · 你已經想到的內容</div>
+  <h2>有想到的就填，沒想到的交給 AI</h2>
+  <label>一定要有的功能</label>
+  <div class="chips" id="featureChips">
+    <button type="button" class="chip" data-value="新增">新增</button>
+    <button type="button" class="chip" data-value="編輯">編輯</button>
+    <button type="button" class="chip" data-value="刪除">刪除</button>
+    <button type="button" class="chip" data-value="搜尋">搜尋</button>
+    <button type="button" class="chip" data-value="篩選">篩選</button>
+    <button type="button" class="chip" data-value="日曆">日曆</button>
+    <button type="button" class="chip" data-value="每日勾選">每日勾選</button>
+    <button type="button" class="chip" data-value="統計">統計</button>
+    <button type="button" class="chip" data-value="備份／還原">備份／還原</button>
+  </div>
+  <label>其他你一定想要的</label>
+  <textarea id="mustHave" placeholder="例如：每天自動換日期、可以留一句話"></textarea>
+  <label>如果你已經知道要記哪些資料</label>
+  <textarea id="fields" placeholder="例如：日期、項目、完成狀態、今天一句話"></textarea>
+</section>
+
+<section class="step" data-step="5">
+  <div class="eyebrow">STEP 6 · 風格與技術</div>
+  <h2>讓成品更像你要的樣子</h2>
+  <label>喜歡的風格</label>
+  <textarea id="style" placeholder="例如：柔和、有色彩、鼠尾草綠、霧藍、淡紫、杏橘，可愛但不要太少女"></textarea>
+  <label>一定不要出現</label>
+  <textarea id="avoid" placeholder="例如：不要太黃、不要太粉、不要字太小、不要企業後台感"></textarea>
+  <label>這次想做到哪一種版本</label>
+  <div class="chips" id="techChips">
+    <button type="button" class="chip" data-value="單機 HTML 原型">單機 HTML</button>
+    <button type="button" class="chip" data-value="公開靜態網站">公開網站</button>
+    <button type="button" class="chip" data-value="雲端資料系統">雲端系統</button>
+    <button type="button" class="chip" data-value="登入／多人系統">多人系統</button>
+    <button type="button" class="chip" data-value="交給AI判斷">交給 AI 判斷</button>
+  </div>
+</section>
+
+<section class="step" data-step="6">
+  <div class="eyebrow">完成 · 成形結果</div>
+  <h2>你的完整第一版製作規格</h2>
+  <p class="desc">這裡不是只有一段 Prompt，而是包含 AI 需要幫你完成的整體工作方式。</p>
+
+  <div class="section-title">需求摘要</div>
+  <div id="summary"></div>
+
+  <div class="section-title">完整 AI 製作指令</div>
+  <div class="prompt" id="prompt"></div>
+  <button type="button" class="btn primary full" id="copyBtn">複製完整指令</button>
+
+  <div class="section-title">接下來可以怎麼走</div>
+  <div class="next-choices">
+    <div class="next-card">直接開始製作第一版</div>
+    <div class="next-card">完成後進入修改／優化</div>
+    <div class="next-card">最後做上線／安全檢查</div>
+  </div>
+</section>
+
+<div class="actions">
+  <button type="button" class="btn ghost" id="backBtn">← 上一步</button>
+  <button type="button" class="btn primary" id="nextBtn">下一步 →</button>
+</div>
+</div>
+
+<div class="footer">想法成形所｜成形引擎 1.0</div>
+</div>
+<div class="toast" id="toast">已複製</div>
+
+<script>
+(function(){
+"use strict";
+var step=0,total=7,key="form-engine-v1";
+var state={idea:"",type:"",problem:"",result:"",user:"",context:"",assist:"完整規劃",features:[],mustHave:"",fields:"",style:"",avoid:"",tech:"交給AI判斷"};
+function $(id){return document.getElementById(id)}
+function save(){try{localStorage.setItem(key,JSON.stringify(state))}catch(e){}}
+function load(){try{var s=JSON.parse(localStorage.getItem(key)||"{}");for(var k in s)state[k]=s[k]}catch(e){}}
+function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function toast(t){var el=$("toast");el.textContent=t;el.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(function(){el.classList.remove("show")},1300)}
+function bindText(id){var el=$(id);el.value=state[id]||"";el.addEventListener("input",function(){state[id]=el.value;save()})}
+function bindSingle(container,keyName,selector){
+ var box=$(container),els=box.querySelectorAll(selector||"button");
+ for(var i=0;i<els.length;i++){
+  (function(btn){
+   if(state[keyName]===btn.getAttribute("data-value"))btn.classList.add("active");
+   btn.addEventListener("click",function(){
+    for(var j=0;j<els.length;j++)els[j].classList.remove("active");
+    btn.classList.add("active");state[keyName]=btn.getAttribute("data-value");save();
+   });
+  })(els[i]);
+ }
+}
+function bindMulti(container,keyName){
+ var box=$(container),els=box.querySelectorAll("button");
+ for(var i=0;i<els.length;i++){
+  (function(btn){
+   var v=btn.getAttribute("data-value");
+   if(state[keyName].indexOf(v)>=0)btn.classList.add("active");
+   btn.addEventListener("click",function(){
+    var idx=state[keyName].indexOf(v);
+    if(idx>=0){state[keyName].splice(idx,1);btn.classList.remove("active")}
+    else{state[keyName].push(v);btn.classList.add("active")}
+    save();
+   });
+  })(els[i]);
+ }
+}
+function promptText(){
+ var feats=state.features.slice();if(state.mustHave)feats.push(state.mustHave);
+ var featureText=feats.length?feats.join("、"):"尚未指定，請依使用情境自行判斷第一版必要功能";
+ return "你現在同時擔任產品企劃、UX/UI 設計師與前端／產品開發者。\n\n"+
+ "你的任務不是只把我說的內容整理成清單，而是要先理解我的目的，再主動補齊我沒有想到、但第一版真正使用時需要的內容。\n\n"+
+ "【我的想法】\n"+(state.idea||"尚未填寫")+"\n\n"+
+ "【類型】\n"+(state.type||"未指定")+"\n\n"+
+ "【第一版最重要要解決的問題】\n"+(state.problem||"尚未填寫")+"\n\n"+
+ "【希望得到的結果】\n"+(state.result||"尚未填寫")+"\n\n"+
+ "【主要使用者】\n"+(state.user||"請依描述判斷最合理的主要使用者")+"\n\n"+
+ "【主要使用情境】\n"+(state.context||"請依實際使用情境合理推斷")+"\n\n"+
+ "【我已經明確想要的功能／內容】\n"+featureText+"\n\n"+
+ "【我目前想到的資料欄位】\n"+(state.fields||"尚未指定，請依產品情境補齊")+"\n\n"+
+ "【AI 幫我補齊的程度】\n"+state.assist+"\n\n"+
+ "【視覺方向】\n"+(state.style||"請依產品用途設計柔和、清楚、有質感、手機優先的介面")+"\n\n"+
+ "【避免】\n"+(state.avoid||"不要制式、不要字太小、不要為了塞內容破壞留白")+"\n\n"+
+ "【版本方向】\n"+state.tech+"\n\n"+
+ "請依下列方式工作：\n"+
+ "1. 先用簡短段落說明你對需求的理解，不要一開始就寫程式。\n"+
+ "2. 主動找出我可能漏掉的需求：使用情境、必要資料、核心功能、頁面、狀態、搜尋／篩選、空白狀態、錯誤狀態、手機操作、資料保存、備份、登入與權限、安全。\n"+
+ "3. 把補出的內容分成三類：\n"+
+ "   A. 我明確要求的：必須保留。\n"+
+ "   B. 第一版必要的：你可以主動補齊，並簡短說明原因。\n"+
+ "   C. 之後可能有用的：只提出，不要擅自塞進第一版。\n"+
+ "4. 不要把所有不知道的地方再丟回來問我。能依情境合理判斷的，就直接替我做判斷。\n"+
+ "5. 幫我設計最少步驟的操作流程，並安排首頁、頁面／選單、資訊層級與高頻操作位置。\n"+
+ "6. 以手機優先設計。不能用縮小字體解決跑版；按鈕、表單、卡片、長文字都必須適合手機。\n"+
+ "7. 主動判斷技術層級：單機 HTML、公開靜態網站、雲端資料系統或登入／多人系統。若涉及跨裝置、客戶資料、多人使用或長期保存，必須指出需要的資料庫、登入與權限。\n"+
+ "8. 第一版範圍鎖定後，直接製作可操作版本，不要只給 wireframe、規劃或功能清單。\n"+
+ "9. 所有按鈕、頁籤、表單都必須真的可以操作，不要有假按鈕或 placeholder 功能。\n"+
+ "10. 修改既有版本時，先保護目前正常功能；不能修一個地方又讓其他功能壞掉。\n"+
+ "11. 完成後自行驗收：手機排版、頁籤切換、所有按鈕、新增／編輯／刪除、搜尋／篩選、資料保存、空白狀態、長文字、錯誤處理與 JavaScript error。\n"+
+ "12. 最後請清楚告訴我三件事：現在完成了什麼、我現在怎麼使用、下一步值得做什麼。\n\n"+
+ "請直接開始。";
+}
+function render(){
+ var steps=document.querySelectorAll(".step");
+ for(var i=0;i<steps.length;i++)steps[i].classList.toggle("active",i===step);
+ $("stepCount").textContent=(step+1)+" / "+total;
+ $("stepTitle").textContent=["想法","第一版邊界","使用情境","AI補齊","功能內容","風格技術","完成"][step];
+ $("fill").style.width=(step/(total-1)*100)+"%";
+ $("backBtn").style.visibility=step===0?"hidden":"visible";
+ $("nextBtn").style.display=step===total-1?"none":"inline-block";
+ if(step===total-1){
+   var rows=[
+    ["你想做",state.idea||"—"],["核心問題",state.problem||"—"],["使用者",state.user||"交給 AI 判斷"],
+    ["AI 補齊程度",state.assist],["版本",state.tech],["風格",state.style||"交給 AI 判斷"]
+   ],out="";
+   for(i=0;i<rows.length;i++)out+='<div class="result-box"><b>'+esc(rows[i][0])+'</b><p>'+esc(rows[i][1])+'</p></div>';
+   $("summary").innerHTML=out;$("prompt").textContent=promptText();
+ }
+}
+load();
+["idea","problem","result","user","context","mustHave","fields","style","avoid"].forEach(bindText);
+bindSingle("typeChips","type","button");
+bindSingle("assistChoices","assist",".choice");
+bindSingle("techChips","tech","button");
+bindMulti("featureChips","features");
+$("nextBtn").addEventListener("click",function(){if(step<total-1){step++;render();window.scrollTo(0,0)}});
+$("backBtn").addEventListener("click",function(){if(step>0){step--;render();window.scrollTo(0,0)}});
+$("copyBtn").addEventListener("click",function(){
+ var text=promptText();
+ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){toast("完整指令已複製")}).catch(function(){fallback(text)})}
+ else fallback(text);
+});
+function fallback(text){
+ var ta=document.createElement("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.focus();ta.select();
+ try{document.execCommand("copy");toast("完整指令已複製")}catch(e){toast("請長按文字複製")}
+ document.body.removeChild(ta);
+}
+render();
+})();
+</script>
+</body>
+</html>
