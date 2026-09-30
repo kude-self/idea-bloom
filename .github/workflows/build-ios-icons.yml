@@ -1,0 +1,28 @@
+name: Build iOS home icons
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'assets/icon-*.svg'
+      - '.github/workflows/build-ios-icons.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y librsvg2-bin
+      - name: Build PNG icons
+        run: |
+          rsvg-convert -w 180 -h 180 assets/icon-course-manager.svg -o course-manager/apple-touch-icon.png
+          rsvg-convert -w 180 -h 180 assets/icon-customer.svg -o customer/apple-touch-icon.png
+          cp customer/apple-touch-icon.png apple-touch-icon.png
+      - name: Commit icons
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add course-manager/apple-touch-icon.png customer/apple-touch-icon.png apple-touch-icon.png
+          git diff --cached --quiet || git commit -m "Build iOS home screen icons"
+          git push
