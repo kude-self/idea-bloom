@@ -1,48 +1,10 @@
-# IdeaBloom
+# 想法成形所｜正式系統
 
-Interactive prototype for turning a rough idea into a creation blueprint and an AI-ready build prompt.
+目前唯一正式入口：`customer/index.html`
 
-## Live URL
+用途：把想法整理成可直接交給 AI 製作的完整產品規格。
 
-https://kude-self.github.io/idea-bloom/
-
-## Current flow
-
-1. Enter a rough idea.
-2. Expand it into key needs.
-3. Choose creation depth.
-4. Answer one context-sensitive follow-up question.
-5. Generate a creation blueprint, first-version scope, future path, and a copyable AI build prompt.
-
-## Deployment
-
-- Repository: public
-- Branch: `main`
-- Static entry file: `index.html`
-- `.nojekyll` included
-- GitHub Pages deployment workflow: `.github/workflows/pages.yml`
-- Smoke-test workflow: `.github/workflows/test.yml`
-
-## Smoke tests
-
-The automated smoke test checks:
-
-- `index.html` exists
-- essential interaction buttons exist
-- viewport/mobile markers exist
-- inline JavaScript passes `node --check`
-- mobile font size / responsive CSS markers exist
-
-## Manual mobile test checklist
-
-- Open in Safari on iPhone
-- Enter a sample idea
-- Tap `幫我展開這個想法`
-- Verify idea map appears and scrolls into view
-- Switch creation depth
-- Tap `就是這個方向`
-- Answer the follow-up question
-- Generate the creation blueprint
-- Verify prompt is produced
-- Tap copy and paste into Notes to confirm clipboard output
-- Test at small and large text sizes
+## 版本規則
+- `customer/`：正式版，保留並持續更新。
+- 舊的 `form-engine/`、`idea-lab/`、`myverse.html` 已移除，不再作為可用版本。
+- 後續修改只以正式版為基準，不從已淘汰版本恢復功能。
